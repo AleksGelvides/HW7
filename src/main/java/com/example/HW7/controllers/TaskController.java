@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,6 +25,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Mono<ResponseEntity<TaskDto>> findById(@PathVariable String id) {
         return service.findById(id)
                 .map(ResponseEntity::ok)
@@ -31,6 +33,7 @@ public class TaskController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Mono<ResponseEntity<TaskDto>> createTask(@RequestBody TaskDto dto) {
         return service.saveOrUpdate(dto, null)
                 .map(ResponseEntity::ok)
@@ -38,6 +41,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Mono<ResponseEntity<TaskDto>> changeTask(@RequestBody TaskDto dto, @PathVariable String id) {
         return service.saveOrUpdate(dto, id)
                 .map(ResponseEntity::ok)
@@ -45,12 +49,14 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Mono<ResponseEntity<Void>> delete(@PathVariable String id) {
         return service.deleteById(id)
                 .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     @PostMapping(value = "/add-observe")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Mono<ResponseEntity<TaskDto>> addObserve(@RequestParam("taskId") String taskId,
                                                     @RequestParam("observeId") String observeId) {
         return service.addObserver(taskId, observeId)
@@ -59,6 +65,7 @@ public class TaskController {
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Flux<ServerSentEvent<TaskDto>> getItemUpdates() {
         return publisher.getUpdateSinks().asFlux()
                 .map(itemModel -> ServerSentEvent.builder(itemModel).build());

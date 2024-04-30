@@ -4,6 +4,7 @@ import com.example.HW7.data.dto.UserDto;
 import com.example.HW7.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,14 +15,16 @@ import reactor.core.publisher.Mono;
 public class UserController {
     private final UserService service;
 
-    @GetMapping
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Flux<UserDto> getAll() {
         return service.findAll();
     }
 
-    @GetMapping("/{id}")
-    public Mono<ResponseEntity<UserDto>> findById(@PathVariable String id) {
-        return service.findById(id)
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
+    public Mono<ResponseEntity<UserDto>> findById(@RequestParam String userId) {
+        return service.findById(userId)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
@@ -33,17 +36,19 @@ public class UserController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
+    @PutMapping
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
     public Mono<ResponseEntity<UserDto>> changeUser(@RequestBody UserDto userDto,
-                                                    @PathVariable String id) {
-        return service.saveOrUpdate(userDto, id)
+                                                    @RequestParam String userId) {
+        return service.saveOrUpdate(userDto, userId)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Void>> delete(@PathVariable String id) {
-        return service.deleteById(id)
+    @DeleteMapping
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_MANAGER')")
+    public Mono<ResponseEntity<Void>> delete(@RequestParam String userId) {
+        return service.deleteById(userId)
                 .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
